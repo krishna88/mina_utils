@@ -8,6 +8,8 @@ from MinaPyClient import Client
 from time import sleep
 import logging
 import subprocess
+import boto3
+from botocore.exceptions import NoCredentialsError
 
 c = yaml.load(open('config.yml', encoding='utf8'), Loader=yaml.SafeLoader)
 
@@ -19,11 +21,14 @@ GRAPHQL_HOST        = str(c["GRAPHQL_HOST"])
 GRAPHQL_PORT        = int(c["GRAPHQL_PORT"])
 WAIT_TIME_IN_CHECKS        = int(c["WAIT_TIME_IN_CHECKS"])
 CHECK_FREQ_IN_MIN        = int(c["CHECK_FREQ_IN_MIN"])
+ACCESS_KEY      = str(c["AWS_ACCESS_KEY"])
+SECRET_KEY      = str(c["AWS_SECRET_KEY"])
 
 bot=telegram.Bot(token=TELEGRAM_TOKEN)
 
 
 COUNT = 0 
+RUN_COUNT = 0 # used for log export that's only required to be run every 4 hours ~= once every 48 runs
 
 def record_status(msg, type="standard"):
     # sending a telgram message
@@ -138,9 +143,26 @@ def checksidecarstatusandrestart():
         os.system("service mina-bp-stats-sidecar restart")
         record_status(NODE_NAME + " | sidecar has been restarted")
 
+# For exporting the logs to AWS
+def upload_to_aws(local_file, bucket, s3_file):
+    s3 = boto3.client('s3', aws_access_key_id=ACCESS_KEY,
+                      aws_secret_access_key=SECRET_KEY)
+
+    try:
+        s3.upload_file(local_file, bucket, s3_file)
+        print("Upload Successful")
+        return True
+    except FileNotFoundError:
+        print("The file was not found")
+        return False
+    except NoCredentialsError:
+        print("Credentials not available")
+        return False
+
+
 
 if __name__ == "__main__": 
-       
+
     while True:
         try:
             check_node_sync()
@@ -148,5 +170,25 @@ if __name__ == "__main__":
         except Exception as e:
             msg = str(e)
             record_status(msg, type='alert')
-        sleep(60*CHECK_FREQ_IN_MIN)
-    
+        
+        try:
+            if (RUN_COUNT % 48) == 0: # condition triggers every ~ 4 hours given the sleep time is 5 mins + some run time
+                print('Starting the MINA log export process. The run count is : ' + run_count)
+                current_time = time.strftime("%Y%m%d_%H%M")
+                fn = NODE_NAME + '_mina_log_' + str(current_time)
+                local_file = '/root/.mina-config/exported_logs/' + fn + '.tar.gz'
+                bucket_name = 'mina-node-logs'
+                s3_file_name = fn + '.tar.gz'
+
+                command = 'mina client export-logs -tarfile ' + fn
+                run_export = os.system(command) # executing the shell command to export the logs        
+                uploaded = upload_to_aws(local_file, bucket_name, s3_file_name)
+                record_status(NODE_NAME + '| log uploaded to AWS')
+            else:
+                pass
+        except Exception as e:
+            msg = str(e)
+            record_status(msg, type='alert')
+        
+        sleep(60*CHECK_FREQ_IN_MIN) # currently set to 5 mins
+        RUN_COUNT += 1
