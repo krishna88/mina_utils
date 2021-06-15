@@ -7,6 +7,7 @@ import os
 from MinaPyClient import Client
 from time import sleep
 import logging
+import subprocess
 
 c = yaml.load(open('config.yml', encoding='utf8'), Loader=yaml.SafeLoader)
 
