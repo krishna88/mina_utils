@@ -138,7 +138,7 @@ def checksidecarstatusandrestart():
     output,error  = subprocess.Popen(
                     command, universal_newlines=True, shell=True,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    print(f'Total sidecar updates sent in 10 mts is {output}.')
+    print(f'Total sidecar updates sent in 10 mts is {output}')
     if int(output) < 2:
         os.system("service mina-bp-stats-sidecar restart")
         record_status(NODE_NAME + " | sidecar has been restarted")
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         
         try:
             if (RUN_COUNT % 48) == 0: # condition triggers every ~ 4 hours given the sleep time is 5 mins + some run time
-                print('Starting the MINA log export process. The run count is : ' + run_count)
+                print('Starting the MINA log export process. The run count is : ' + RUN_COUNT)
                 current_time = time.strftime("%Y%m%d_%H%M")
                 fn = NODE_NAME + '_mina_log_' + str(current_time)
                 local_file = '/root/.mina-config/exported_logs/' + fn + '.tar.gz'
