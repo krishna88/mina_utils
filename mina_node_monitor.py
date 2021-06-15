@@ -173,7 +173,7 @@ if __name__ == "__main__":
         
         try:
             if (RUN_COUNT % 48) == 0: # condition triggers every ~ 4 hours given the sleep time is 5 mins + some run time
-                print('Starting the MINA log export process. The run count is : ' + RUN_COUNT)
+                print('Starting the MINA log export process. The run count is : ' + str(RUN_COUNT))
                 current_time = time.strftime("%Y%m%d_%H%M")
                 fn = NODE_NAME + '_mina_log_' + str(current_time)
                 local_file = '/root/.mina-config/exported_logs/' + fn + '.tar.gz'
