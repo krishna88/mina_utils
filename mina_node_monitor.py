@@ -127,11 +127,23 @@ def check_node_sync():
             msg = base_msg + " in unknown mode. Attention required"
             record_status(msg, type='alert')
 
+def checksidecarstatusandrestart():
+    command = 'journalctl -u mina-bp-stats-sidecar.service --since "10 minutes ago" | grep -c "Got block data"'
+    output,error  = subprocess.Popen(
+                    command, universal_newlines=True, shell=True,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    print(f'Total sidecar updates sent in 10 mts is {output}.')
+    if int(output) < 2:
+        os.system("service mina-bp-stats-sidecar restart")
+        record_status(NODE_NAME + " | sidecar has been restarted")
+
+
 if __name__ == "__main__": 
        
     while True:
         try:
             check_node_sync()
+            checksidecarstatusandrestart()
         except Exception as e:
             msg = str(e)
             record_status(msg, type='alert')

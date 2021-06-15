@@ -4,7 +4,7 @@ import yaml
 from botocore.exceptions import NoCredentialsError
 import time
 
-c = yaml.load(open('config.yml', encoding='utf8'), Loader=yaml.SafeLoader)
+c = yaml.load(open('/root/mina_utils/config.yml', encoding='utf8'), Loader=yaml.SafeLoader)
 
 NODE_NAME           = str(c["NODE_NAME"])
 ACCESS_KEY      = str(c["AWS_ACCESS_KEY"])
@@ -36,7 +36,7 @@ def upload_to_aws(local_file, bucket, s3_file):
         return False
 
 if __name__ == "__main__": 
-    
+
     try:    
         command = 'mina client export-logs -tarfile ' + fn
         run_export = os.system(command) # executing the shell command to export the logs
