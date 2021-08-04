@@ -23,6 +23,7 @@ WAIT_TIME_IN_CHECKS        = int(c["WAIT_TIME_IN_CHECKS"])
 CHECK_FREQ_IN_MIN        = int(c["CHECK_FREQ_IN_MIN"])
 ACCESS_KEY      = str(c["AWS_ACCESS_KEY"])
 SECRET_KEY      = str(c["AWS_SECRET_KEY"])
+STORE_LOGS_IN_AWS = str(c["STORE_LOGS_IN_AWS"])
 
 bot=telegram.Bot(token=TELEGRAM_TOKEN)
 
@@ -170,25 +171,26 @@ if __name__ == "__main__":
         except Exception as e:
             msg = str(e)
             record_status(msg, type='alert')
-        
-        try:
-            if (RUN_COUNT % 48) == 0: # condition triggers every ~ 4 hours given the sleep time is 5 mins + some run time
-                print('Starting the MINA log export process. The run count is : ' + str(RUN_COUNT))
-                current_time = time.strftime("%Y%m%d_%H%M")
-                fn = NODE_NAME + '_mina_log_' + str(current_time)
-                local_file = '/root/.mina-config/exported_logs/' + fn + '.tar.gz'
-                bucket_name = 'mina-node-logs'
-                s3_file_name = fn + '.tar.gz'
 
-                command = 'mina client export-logs -tarfile ' + fn
-                run_export = os.system(command) # executing the shell command to export the logs        
-                uploaded = upload_to_aws(local_file, bucket_name, s3_file_name)
-                record_status(NODE_NAME + '| log uploaded to AWS')
-            else:
-                pass
-        except Exception as e:
-            msg = str(e)
-            record_status(msg, type='alert')
+        if STORE_LOGS_IN_AWS == True:
+            try:
+                if (RUN_COUNT % 48) == 0: # condition triggers every ~ 4 hours given the sleep time is 5 mins + some run time
+                    print('Starting the MINA log export process. The run count is : ' + str(RUN_COUNT))
+                    current_time = time.strftime("%Y%m%d_%H%M")
+                    fn = NODE_NAME + '_mina_log_' + str(current_time)
+                    local_file = '/root/.mina-config/exported_logs/' + fn + '.tar.gz'
+                    bucket_name = 'mina-node-logs'
+                    s3_file_name = fn + '.tar.gz'
+
+                    command = 'mina client export-logs -tarfile ' + fn
+                    run_export = os.system(command) # executing the shell command to export the logs        
+                    uploaded = upload_to_aws(local_file, bucket_name, s3_file_name)
+                    record_status(NODE_NAME + '| log uploaded to AWS')
+                else:
+                    pass
+            except Exception as e:
+                msg = str(e)
+                record_status(msg, type='alert')
         
         sleep(60*CHECK_FREQ_IN_MIN) # currently set to 5 mins
         RUN_COUNT += 1
