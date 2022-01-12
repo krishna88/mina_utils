@@ -160,6 +160,25 @@ def upload_to_aws(local_file, bucket, s3_file):
         print("Credentials not available")
         return False
 
+# Restarts node if the uptime is more than 24 hours to avoid the memoryleak problem
+def node_maintenance():
+        try:
+            coda = Client(graphql_host=GRAPHQL_HOST, graphql_port=GRAPHQL_PORT)
+            daemon_status = coda.get_daemon_status()
+            sync_status = daemon_status['daemonStatus']['syncStatus']
+            uptime = int(daemon_status['daemonStatus']['uptimeSecs']) 	
+            nextBlockTime = daemon_status['daemonStatus']['nextBlockProduction']['times'][0]['startTime']
+            current_epoch_time = int(time.time()*1000)
+            next_block_in_sec = int(nextBlockTime) - current_epoch_time
+            
+            if next_block_in_sec > 3600: # to avoid restart when there is a block production in less than an hour
+                if uptime > 86400: # executing a restart if the node's uptime is more than 24 hours
+                    restart_node()
+            return None
+
+        except:
+            return None
+
 
 
 if __name__ == "__main__": 
@@ -168,6 +187,16 @@ if __name__ == "__main__":
         try:
             check_node_sync()
             checksidecarstatusandrestart()
+        except Exception as e:
+            msg = str(e)
+            record_status(msg, type='alert')
+
+        try:
+            if (RUN_COUNT % 144) == 0: # condition triggers every ~ 12 hours given the sleep time is 5 mins + some run time
+                node_maintenance()
+                record_status(NODE_NAME + '| Maintenance Restart Performed')
+            else:
+                pass
         except Exception as e:
             msg = str(e)
             record_status(msg, type='alert')
