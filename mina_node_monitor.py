@@ -174,6 +174,7 @@ def node_maintenance():
             if next_block_in_sec > 3600: # to avoid restart when there is a block production in less than an hour
                 if uptime > 86400: # executing a restart if the node's uptime is more than 24 hours
                     restart_node()
+                    record_status(NODE_NAME + '| Maintenance Restart Performed')
             return None
 
         except:
@@ -194,7 +195,7 @@ if __name__ == "__main__":
         try:
             if (RUN_COUNT % 144) == 0: # condition triggers every ~ 12 hours given the sleep time is 5 mins + some run time
                 node_maintenance()
-                record_status(NODE_NAME + '| Maintenance Restart Performed')
+                
             else:
                 pass
         except Exception as e:
