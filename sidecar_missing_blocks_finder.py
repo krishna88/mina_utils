@@ -3,7 +3,7 @@ import re
 input_file = "data/sidecar_log_temp.txt"
 
 def extract_recorded_blocks(input_file):
-    p = re.compile("tip (\d{4,5})\.")
+    p = re.compile("tip (\d{5,6})\.")
     recorded_blocks = []
 
     with open(input_file) as f:
