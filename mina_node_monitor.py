@@ -193,7 +193,7 @@ if __name__ == "__main__":
             record_status(msg, type='alert')
 
         try:
-            if (RUN_COUNT % 144) == 0: # condition triggers every ~ 12 hours given the sleep time is 5 mins + some run time
+            if (RUN_COUNT % 1440) == 0: # condition triggers every ~ 120 hours given the sleep time is 5 mins + some run time
                 node_maintenance()
                 
             else:
